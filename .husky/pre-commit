@@ -1,0 +1,12 @@
+echo "🎯💈 Formatting and linting staged files with Biome before committing 💈🎯"
+echo "Please be patient, this may take a while..."
+
+npx lint-staged
+
+result=$?
+if [ $result -ne 0 ]; then
+  echo "❌ Lint-staged checks failed. Commit aborted."
+  exit 1
+fi
+
+echo "✅ All checks passed. Proceeding with commit..."
