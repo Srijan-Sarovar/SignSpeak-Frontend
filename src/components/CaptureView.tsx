@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
-import { motion } from 'framer-motion'
 
 interface CaptureViewProps {
   onCaptureComplete: () => void
@@ -9,7 +8,7 @@ interface CaptureViewProps {
 
 export default function CaptureView({ onCaptureComplete }: CaptureViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [countdown, setCountdown] = useState(5)
+  const [isSpacePressed, setIsSpacePressed] = useState(false)
 
   useEffect(() => {
     const startCamera = async () => {
@@ -23,46 +22,43 @@ export default function CaptureView({ onCaptureComplete }: CaptureViewProps) {
       }
     }
 
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.code === 'Space') {
+        setIsSpacePressed(true)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
     startCamera()
 
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer)
-          onCaptureComplete()
-        }
-        return prev - 1
-      })
-    }, 1000)
-
     return () => {
-      clearInterval(timer)
       const stream = videoRef.current?.srcObject as MediaStream
       stream?.getTracks().forEach(track => track.stop())
+      window.removeEventListener('keydown', handleKeyPress)
     }
-  }, [onCaptureComplete])
+  }, [])
+
+  useEffect(() => {
+    if (isSpacePressed) {
+      onCaptureComplete()
+    }
+  }, [isSpacePressed, onCaptureComplete])
 
   return (
-    <div className="relative">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="rounded-lg overflow-hidden shadow-lg"
-      >
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-full h-full object-cover"
-          style={{ maxWidth: '640px', maxHeight: '480px' }}
-        />
-      </motion.div>
-      <div className="absolute top-4 right-4 bg-white bg-opacity-75 rounded-full w-12 h-12 flex items-center justify-center text-2xl font-bold">
-        {countdown}
-      </div>
+    <div className="relative text-center border-2 border-gray-500 p-2 rounded-lg">
+      <h2 className="text-xl mt-2 text-gray-300 font-semibold mb-2">
+          Capturing....
+        </h2>
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className="w-full h-auto max-w-lg mx-auto"
+      />
+      <p className="mt-4 text-lg font-semibold">
+        Press the <span className="text-primary">Space</span> button to complete capture.
+      </p>
     </div>
   )
 }
-
